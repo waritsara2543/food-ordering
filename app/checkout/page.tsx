@@ -21,7 +21,7 @@ interface CartItem extends MenuItem {
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerNote, setCustomerNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
@@ -85,8 +85,8 @@ export default function CheckoutPage() {
   };
 
   const handleSubmitOrder = async () => {
-    if (!customerName.trim() || !customerPhone.trim()) {
-      alert("กรุณากรอกชื่อและเบอร์โทรศัพท์");
+    if (!customerName.trim() || !customerNote.trim()) {
+      alert("กรุณากรอกชื่อและโน้ต");
       return;
     }
 
@@ -122,7 +122,7 @@ export default function CheckoutPage() {
       // Create order in Supabase
       const createdOrder = await ordersApi.create({
         customer_name: customerName.trim(),
-        customer_phone: customerPhone.trim(),
+        customer_phone: customerNote.trim(),
         total: getTotalPrice(),
         payment_slip: paymentSlipPreview || undefined,
         items: cart.map((item) => ({
@@ -409,13 +409,13 @@ export default function CheckoutPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.7 }}
                 >
-                  <Label htmlFor="customerPhone" className="text-gray-700">
-                    เบอร์โทรศัพท์
+                  <Label htmlFor="customerNote" className="text-gray-700">
+                    โน้ต
                   </Label>
                   <Input
-                    id="customerPhone"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    id="customerNote"
+                    value={customerNote}
+                    onChange={(e) => setCustomerNote(e.target.value)}
                     placeholder="กรุณากรอกเบอร์โทรศัพท์"
                     className="mt-2 bg-white/80 border-orange-200 focus:border-orange-400 focus:ring-orange-200"
                     required
