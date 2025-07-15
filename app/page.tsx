@@ -10,12 +10,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Plus, Minus, Sparkles } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Sparkles, Megaphone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { menuItemsApi, type MenuItem } from "@/lib/supabase";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -31,6 +39,7 @@ export default function HomePage() {
   const [showAdminHint, setShowAdminHint] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [openDialog, setOpenDialog] = useState(true);
 
   useEffect(() => {
     loadMenuItems();
@@ -453,6 +462,34 @@ export default function HomePage() {
           )}
         </AnimatePresence>
       </div>
+      {/* Dialog Anouncement */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-lg font-semibold">
+              <Megaphone className="w-8 h-8 text-orange-500 inline-block mr-2" />
+              ประกาศ
+            </DialogTitle>
+            <DialogDescription>
+              ปิดรับออเดอร์ เวลา 22:00 น. ทุกวัน
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="mt-4 border-orange-400 hover:border-orange-500 text-orange-600 hover:text-orange-700"
+                onClick={() => {
+                  // Close dialog logic here
+                  setOpenDialog(false);
+                }}
+              >
+                เข้าใจแล้ว
+              </Button>
+            </DialogTrigger>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
