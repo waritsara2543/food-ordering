@@ -85,8 +85,8 @@ export default function CheckoutPage() {
   };
 
   const handleSubmitOrder = async () => {
-    if (!customerName.trim() || !customerNote.trim()) {
-      alert("กรุณากรอกชื่อและโน้ต");
+    if (!customerName.trim()) {
+      alert("กรุณากรอกชื่อ");
       return;
     }
 
@@ -416,7 +416,7 @@ export default function CheckoutPage() {
                     id="customerNote"
                     value={customerNote}
                     onChange={(e) => setCustomerNote(e.target.value)}
-                    placeholder="กรุณากรอกเบอร์โทรศัพท์"
+                    placeholder="โน้ต"
                     className="mt-2 bg-white/80 border-orange-200 focus:border-orange-400 focus:ring-orange-200"
                     required
                   />
