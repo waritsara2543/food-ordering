@@ -24,6 +24,7 @@ import {
   X,
   Check,
   Clock,
+  CalendarIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,6 +35,12 @@ import {
   type MenuItem,
   type OrderWithItems,
 } from "@/lib/supabase";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
@@ -48,6 +55,11 @@ export default function AdminPage() {
   });
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [month, setMonth] = useState<Date>(new Date());
+  const [value, setValue] = useState<string>(formatDate(new Date()));
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("orders");
 
   const router = useRouter();
 
@@ -79,7 +91,7 @@ export default function AdminPage() {
   };
 
   const getTodayOrders = () => {
-    const today = new Date();
+    const today = date || new Date();
     today.setHours(0, 0, 0, 0);
     return orders.filter((order) => {
       const orderDate = new Date(order.created_at);
@@ -200,6 +212,22 @@ export default function AdminPage() {
     localStorage.removeItem("adminAuth");
     router.push("/");
   };
+  function formatDate(date: Date | undefined) {
+    if (!date) {
+      return "";
+    }
+    return date.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }
+  function isValidDate(date: Date | undefined) {
+    if (!date) {
+      return false;
+    }
+    return !isNaN(date.getTime());
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -305,11 +333,12 @@ export default function AdminPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <Tabs defaultValue="orders" className="space-y-6">
+          <Tabs defaultValue={tab} className="space-y-6" onValueChange={setTab}>
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
+              className="flex items-center justify-between mb-6"
             >
               <TabsList className="bg-white/80 backdrop-blur-sm shadow-lg border-0">
                 <TabsTrigger
@@ -325,6 +354,73 @@ export default function AdminPage() {
                   🍽️ จัดการเมนู
                 </TabsTrigger>
               </TabsList>
+              {tab === "orders" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex justify-between items-center"
+                >
+                  <div className="flex flex-col gap-3">
+                    <Label htmlFor="date" className="px-1">
+                      Select Date
+                    </Label>
+                    <div className="relative flex gap-2">
+                      <Input
+                        id="date"
+                        value={value}
+                        placeholder="June 01, 2025"
+                        className="bg-background pr-10"
+                        onChange={(e) => {
+                          const date = new Date(e.target.value);
+                          setValue(e.target.value);
+                          if (isValidDate(date)) {
+                            setDate(date);
+                            setMonth(date);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setOpen(true);
+                          }
+                        }}
+                      />
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="date-picker"
+                            variant="ghost"
+                            className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                          >
+                            <CalendarIcon className="size-3.5" />
+                            <span className="sr-only">Select date</span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto overflow-hidden p-0"
+                          align="end"
+                          alignOffset={-8}
+                          sideOffset={10}
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            captionLayout="dropdown"
+                            month={month}
+                            onMonthChange={setMonth}
+                            onSelect={(date) => {
+                              setDate(date);
+                              setValue(formatDate(date));
+                              setOpen(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
 
             <TabsContent value="orders" className="space-y-6">
