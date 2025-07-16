@@ -2,17 +2,25 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Badge, Minus, Plus, Printer, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ordersApi, type MenuItem, type OrderWithItems } from "@/lib/supabase";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import html2canvas from "html2canvas";
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -36,6 +44,19 @@ export default function CheckoutPage() {
   const [completedOrder, setCompletedOrder] = useState<OrderWithItems | null>(
     null
   );
+  const [showReciept, setShowReciept] = useState(false);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const handleSaveAsImage = async () => {
+    if (!receiptRef.current) return;
+
+    const canvas = await html2canvas(receiptRef.current);
+    const dataUrl = canvas.toDataURL("image/png");
+
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "receipt.png";
+    link.click();
+  };
 
   const handleLogoClick = () => {
     const newCount = logoClickCount + 1;
@@ -139,6 +160,7 @@ export default function CheckoutPage() {
 
       // Set completed order and close payment modal
       setCompletedOrder(createdOrder);
+      setShowReciept(true);
       setShowPayment(false);
     } catch (error) {
       console.error("Error creating order:", error);
@@ -188,6 +210,162 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
         </motion.div>
+        <Dialog open={showReciept} onOpenChange={setShowReciept}>
+          <DialogContent className="w-full max-w-xs sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <span className="text-2xl">📋</span>
+                รายละเอียดการสั่งซื้อ
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Order Info */}
+              <div className="bg-gray-50 p-2 sm:p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                  <div>
+                    <span className="text-gray-600">วันที่:</span>
+                    <div className="font-medium">
+                      {new Date(
+                        completedOrder?.created_at || ""
+                      ).toLocaleDateString("th-TH", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">เวลา:</span>
+                    <div className="font-medium">
+                      {new Date(
+                        completedOrder?.created_at || ""
+                      ).toLocaleTimeString("th-TH", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <h4 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">
+                  รายการสินค้า
+                </h4>
+                <div className="space-y-1 sm:space-y-2">
+                  {completedOrder?.order_items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center text-xs sm:text-sm bg-white/80 p-2 sm:p-3 rounded-lg shadow-sm"
+                    >
+                      <div>
+                        <span className="font-medium text-gray-800">
+                          {item.menu_item_name}
+                        </span>
+                        <span className="text-gray-600 ml-2">
+                          x{item.quantity}
+                        </span>
+                      </div>
+                      <span className="font-medium text-green-600">
+                        ฿{item.menu_item_price * item.quantity}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="border-t pt-2 sm:pt-4">
+                <div className="space-y-1 sm:space-y-2 text-xs sm:text-base">
+                  <div className="flex justify-between">
+                    <span>รวมทั้งสิ้น:</span>
+                    <span className="font-bold">฿{completedOrder?.total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>รับเงิน:</span>
+                    <span>฿{completedOrder?.total || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>เงินทอน:</span>
+                    <span>฿{0}</span>
+                  </div>
+                </div>
+              </div>
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowReciept(false)}
+                  className="flex-1"
+                >
+                  ปิด
+                </Button>
+                <Button
+                  className="flex-1 bg-blue-500 hover:bg-blue-600"
+                  onClick={handleSaveAsImage}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  บันทึกใบเสร็จ
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {/* reciept */}
+        <div
+          ref={receiptRef}
+          className="p-4 bg-white max-w-sm mx-auto mt-8 font-mono text-xs text-black border border-gray-300"
+        >
+          <h2 className="text-center font-bold mb-2">ใบเสร็จ</h2>
+          <p>
+            วันที่:{" "}
+            {new Date(completedOrder?.created_at || "").toLocaleDateString(
+              "th-TH"
+            )}
+          </p>
+          <p>
+            เวลา:{" "}
+            {new Date(completedOrder?.created_at || "").toLocaleTimeString(
+              "th-TH"
+            )}
+          </p>
+
+          <div className="border-t border-dashed border-gray-400 my-2" />
+
+          <h3 className="font-semibold mb-1">รายการสินค้า</h3>
+          <ul className="mb-2 w-[200px]">
+            {completedOrder?.order_items.map((item, index) => (
+              <li key={index} className="flex justify-between">
+                <span>
+                  {item.menu_item_name} x{item.quantity}
+                </span>
+                <span>
+                  ฿{(item.menu_item_price * item.quantity).toFixed(2)}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="border-t border-dashed border-gray-400 my-2" />
+
+          <h3 className="font-semibold mb-1">สรุปการชำระเงิน</h3>
+          <p className="flex justify-between">
+            <span>จำนวนรายการ</span>
+            <span>{completedOrder?.order_items.length} รายการ</span>
+          </p>
+          <p className="flex justify-between font-bold">
+            <span>รวมทั้งสิ้น</span>
+            <span>฿{completedOrder?.total.toFixed(2)}</span>
+          </p>
+
+          <div className="border-t border-dashed border-gray-400 my-4" />
+
+          <div className="text-center">
+            <p className="text-xs">ขอบคุณที่ใช้บริการ</p>
+          </div>
+        </div>
       </div>
     );
   }
