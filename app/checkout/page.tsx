@@ -316,7 +316,7 @@ export default function CheckoutPage() {
         {/* reciept */}
         <div
           ref={receiptRef}
-          className="p-4 bg-white max-w-sm mx-auto mt-8 font-mono text-xs text-black border border-gray-300 hidden"
+          className="p-4 bg-white max-w-sm mx-auto mt-8 font-mono text-xs text-black border border-gray-300 absolute left-[-9999px]"
         >
           <h2 className="text-center font-bold mb-2">ใบเสร็จ</h2>
           <p>
