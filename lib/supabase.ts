@@ -1,45 +1,46 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Types
 export interface MenuItem {
-  id: string
-  name: string
-  price: number
-  image: string
-  category: "drinks" | "food"
-  description?: string
-  created_at?: string
-  updated_at?: string
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: "drinks" | "food";
+  available: boolean;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Order {
-  id: string
-  customer_name: string
-  customer_phone: string
-  total: number
-  payment_slip?: string
-  payment_status: "pending" | "approved" | "rejected"
-  created_at: string
-  updated_at?: string
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  total: number;
+  payment_slip?: string;
+  payment_status: "pending" | "approved" | "rejected";
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface OrderItem {
-  id: string
-  order_id: string
-  menu_item_id: string
-  menu_item_name: string
-  menu_item_price: number
-  quantity: number
-  created_at?: string
+  id: string;
+  order_id: string;
+  menu_item_id: string;
+  menu_item_name: string;
+  menu_item_price: number;
+  quantity: number;
+  created_at?: string;
 }
 
 export interface OrderWithItems extends Order {
-  order_items: OrderItem[]
+  order_items: OrderItem[];
 }
 
 // Menu Items API
@@ -49,84 +50,103 @@ export const menuItemsApi = {
       .from("menu_items")
       .select("*")
       .order("category", { ascending: true })
-      .order("name", { ascending: true })
+      .order("name", { ascending: true });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   },
 
-  async create(item: Omit<MenuItem, "id" | "created_at" | "updated_at">): Promise<MenuItem> {
-    const { data, error } = await supabase.from("menu_items").insert([item]).select().single()
+  async create(
+    item: Omit<MenuItem, "id" | "created_at" | "updated_at">
+  ): Promise<MenuItem> {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .insert([item])
+      .select()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   },
 
   async update(id: string, item: Partial<MenuItem>): Promise<MenuItem> {
+    const updatedFields = { ...item, updated_at: new Date().toISOString() };
     const { data, error } = await supabase
       .from("menu_items")
-      .update({ ...item, updated_at: new Date().toISOString() })
+      .update(updatedFields)
       .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) {
+      console.error("Update error:", error);
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error(`Update failed for item with id: ${id}`);
+    }
+
+    return data;
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase.from("menu_items").delete().eq("id", id)
+    const { error } = await supabase.from("menu_items").delete().eq("id", id);
 
-    if (error) throw error
+    if (error) throw error;
   },
-}
+};
 
 // Orders API
 export const ordersApi = {
   async getAll(): Promise<OrderWithItems[]> {
     const { data, error } = await supabase
       .from("orders")
-      .select(`
+      .select(
+        `
         *,
         order_items (*)
-      `)
-      .order("created_at", { ascending: false })
+      `
+      )
+      .order("created_at", { ascending: false });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   },
 
   async getTodayOrders(): Promise<OrderWithItems[]> {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
     const { data, error } = await supabase
       .from("orders")
-      .select(`
+      .select(
+        `
         *,
         order_items (*)
-      `)
+      `
+      )
       .gte("created_at", today.toISOString())
       .lt("created_at", tomorrow.toISOString())
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   },
 
   async create(orderData: {
-    customer_name: string
-    customer_phone: string
-    total: number
-    payment_slip?: string
+    customer_name: string;
+    customer_phone: string;
+    total: number;
+    payment_slip?: string;
     items: Array<{
-      menu_item_id: string
-      menu_item_name: string
-      menu_item_price: number
-      quantity: number
-    }>
+      menu_item_id: string;
+      menu_item_name: string;
+      menu_item_price: number;
+      quantity: number;
+    }>;
   }): Promise<OrderWithItems> {
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -140,9 +160,9 @@ export const ordersApi = {
         },
       ])
       .select()
-      .single()
+      .single();
 
-    if (orderError) throw orderError
+    if (orderError) throw orderError;
 
     const orderItems = orderData.items.map((item) => ({
       order_id: order.id,
@@ -150,19 +170,25 @@ export const ordersApi = {
       menu_item_name: item.menu_item_name,
       menu_item_price: item.menu_item_price,
       quantity: item.quantity,
-    }))
+    }));
 
-    const { data: items, error: itemsError } = await supabase.from("order_items").insert(orderItems).select()
+    const { data: items, error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems)
+      .select();
 
-    if (itemsError) throw itemsError
+    if (itemsError) throw itemsError;
 
     return {
       ...order,
       order_items: items,
-    }
+    };
   },
 
-  async updatePaymentStatus(id: string, status: "pending" | "approved" | "rejected"): Promise<Order> {
+  async updatePaymentStatus(
+    id: string,
+    status: "pending" | "approved" | "rejected"
+  ): Promise<Order> {
     const { data, error } = await supabase
       .from("orders")
       .update({
@@ -171,9 +197,9 @@ export const ordersApi = {
       })
       .eq("id", id)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   },
-}
+};

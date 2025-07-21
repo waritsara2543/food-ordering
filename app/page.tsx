@@ -321,13 +321,26 @@ export default function HomePage() {
                         src={item.image || "/placeholder.svg"}
                         alt={item.name}
                         fill
-                        className="object-cover transition-transform duration-300"
+                        className={`object-cover ${
+                          item.available
+                            ? "transition-transform duration-300"
+                            : "opacity-30"
+                        }`}
                       />
                     </motion.div>
                   </CardHeader>
                   <CardContent className="p-4">
                     <CardTitle className="text-lg mb-2 text-gray-800">
                       {item.name}
+                      {item.available ? (
+                        <Badge className="ml-2 bg-green-100 text-green-800 ">
+                          พร้อมจำหน่าย
+                        </Badge>
+                      ) : (
+                        <Badge className="ml-2 bg-red-100 text-red-800">
+                          ไม่พร้อมจำหน่าย
+                        </Badge>
+                      )}
                     </CardTitle>
                     {item.description && (
                       <p className="text-sm text-gray-600 mb-2">
@@ -335,7 +348,9 @@ export default function HomePage() {
                       </p>
                     )}
                     <motion.p
-                      className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent"
+                      className={`text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent ${
+                        item.available ? "" : "opacity-50"
+                      }`}
                       whileHover={{ scale: 1.05 }}
                     >
                       ฿{item.price}
@@ -356,6 +371,7 @@ export default function HomePage() {
                             className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
+                            disabled={!item.available}
                           >
                             <Plus className="w-4 h-4 mr-2" />
                             เพิ่มลงตะกร้า

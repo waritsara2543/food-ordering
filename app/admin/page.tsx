@@ -25,6 +25,7 @@ import {
   Check,
   Clock,
   CalendarIcon,
+  BadgeCheckIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,6 +42,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
@@ -166,6 +168,7 @@ export default function AdminPage() {
           image: newItem.image || "/placeholder.svg?height=200&width=200",
           category: newItem.category as "drinks" | "food",
           description: newItem.description,
+          available: newItem.available || false,
         });
         await loadData();
         setNewItem({
@@ -174,6 +177,7 @@ export default function AdminPage() {
           image: "/placeholder.svg?height=200&width=200",
           category: "drinks",
           description: "",
+          available: false,
         });
         setIsAddingNew(false);
       } catch (error) {
@@ -839,6 +843,25 @@ export default function AdminPage() {
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5 }}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id="newAvailable"
+                              checked={newItem.available}
+                              onCheckedChange={(checked) =>
+                                setNewItem((prev) => ({
+                                  ...prev,
+                                  available: checked,
+                                }))
+                              }
+                            />
+                            <Label htmlFor="newAvailable">พร้อมจำหน่าย</Label>
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.6 }}
                           className="flex space-x-2"
                         >
@@ -988,6 +1011,22 @@ export default function AdminPage() {
                                   className="mt-1 bg-white/80 border-orange-200"
                                 />
                               </div>
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  id="airplane-mode"
+                                  checked={editingItem.available}
+                                  onCheckedChange={(checked) =>
+                                    setEditingItem((prev) =>
+                                      prev
+                                        ? { ...prev, available: checked }
+                                        : null
+                                    )
+                                  }
+                                />
+                                <Label htmlFor="airplane-mode">
+                                  พร้อมจำหน่าย
+                                </Label>
+                              </div>
                               <div className="flex space-x-2">
                                 <motion.div
                                   whileHover={{ scale: 1.05 }}
@@ -1029,9 +1068,30 @@ export default function AdminPage() {
                               >
                                 {item.category === "drinks" ? "🥤" : "🥪"}
                               </motion.div>
-                              <h3 className="font-semibold mb-2 text-gray-800">
-                                {item.name}
-                              </h3>
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-semibold mb-2 text-gray-800">
+                                  {item.name}
+                                </h3>
+                                <Badge
+                                  variant="secondary"
+                                  className={`${
+                                    item.available
+                                      ? "bg-blue-500 text-white dark:bg-blue-600"
+                                      : "bg-red-500 text-white dark:bg-red-600"
+                                  }`}
+                                >
+                                  {item.available ? (
+                                    <BadgeCheckIcon className="mr-2" />
+                                  ) : (
+                                    <X className="mr-2" />
+                                  )}
+
+                                  {item.available
+                                    ? "พร้อมจำหน่าย"
+                                    : "ไม่พร้อมจำหน่าย"}
+                                </Badge>
+                              </div>
+
                               <p className="text-sm text-gray-600 mb-2">
                                 {item.description}
                               </p>
@@ -1053,35 +1113,37 @@ export default function AdminPage() {
                                   ? "🥤 เครื่องดื่ม"
                                   : "🥪 อาหาร"}
                               </Badge>
-                              <div className="flex space-x-2">
-                                <motion.div
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                >
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setEditingItem(item)}
-                                    className="hover:bg-blue-50 border-blue-200"
+                              <div className="flex justify-between items-center">
+                                <div className="flex space-x-2">
+                                  <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
                                   >
-                                    <Edit className="w-4 h-4 mr-1" />
-                                    แก้ไข
-                                  </Button>
-                                </motion.div>
-                                <motion.div
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                >
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleDeleteItem(item.id)}
-                                    className="hover:bg-red-50 border-red-200 text-red-600"
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setEditingItem(item)}
+                                      className="hover:bg-blue-50 border-blue-200"
+                                    >
+                                      <Edit className="w-4 h-4 mr-1" />
+                                      แก้ไข
+                                    </Button>
+                                  </motion.div>
+                                  <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
                                   >
-                                    <Trash2 className="w-4 h-4 mr-1" />
-                                    ลบ
-                                  </Button>
-                                </motion.div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteItem(item.id)}
+                                      className="hover:bg-red-50 border-red-200 text-red-600"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-1" />
+                                      ลบ
+                                    </Button>
+                                  </motion.div>
+                                </div>
                               </div>
                             </motion.div>
                           )}
