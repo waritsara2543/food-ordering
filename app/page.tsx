@@ -39,9 +39,7 @@ export default function HomePage() {
   const [showAdminHint, setShowAdminHint] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [openDialog, setOpenDialog] = useState(
-    localStorage.getItem("dialogClosed") !== "true"
-  );
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     loadMenuItems();
@@ -140,6 +138,11 @@ export default function HomePage() {
       setLogoClickCount(0);
     }, 3000);
   };
+
+  useEffect(() => {
+    const dialogClosed = localStorage.getItem("dialogClosed") === "true";
+    setOpenDialog(!dialogClosed);
+  }, []);
 
   if (loading) {
     return (
