@@ -39,7 +39,9 @@ export default function HomePage() {
   const [showAdminHint, setShowAdminHint] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const [openDialog, setOpenDialog] = useState(true);
+  const [openDialog, setOpenDialog] = useState(
+    localStorage.getItem("dialogClosed") !== "true"
+  );
 
   useEffect(() => {
     loadMenuItems();
@@ -498,6 +500,7 @@ export default function HomePage() {
                 onClick={() => {
                   // Close dialog logic here
                   setOpenDialog(false);
+                  localStorage.setItem("dialogClosed", "true");
                 }}
               >
                 เข้าใจแล้ว
